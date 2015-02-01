@@ -22,6 +22,7 @@ func (r Repository) StartBuild() {
 	err := cmd.Run()
 
 	if err != nil {
+		log.Println(out.String())
 		log.Fatal(err)
 	}
 	fmt.Printf("Result: %s", out.String())
