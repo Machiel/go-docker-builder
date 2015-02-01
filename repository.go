@@ -91,6 +91,8 @@ func (r Repository) StartBuild() {
 		return
 	}
 
+	log.Println("Survived without errors")
+
 	log.Println(string(outputBuf.Bytes()))
 
 }
