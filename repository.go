@@ -110,7 +110,7 @@ func (r Repository) StartBuild() {
 
 	err = client.BuildImage(opts)
 
-	log.Println("Finished calling BuildImage")
+	log.Println("Finished calling BuildImage!")
 
 	if err != nil {
 		log.Println("Unable to build: " + err.Error())
