@@ -41,6 +41,15 @@ func (r Repository) StartBuild() {
 	cmd.Stdout = &buildCmdOut
 	err = buildCmd.Run()
 
+	tpt, cerr := buildCmd.CombinedOutput()
+
+	if cerr != nil {
+		log.Println(cerr.Error())
+		return
+	}
+
+	log.Println(string(tpt))
+
 	if err != nil {
 		log.Println(err.Error())
 		log.Println(buildCmdOut.String())
