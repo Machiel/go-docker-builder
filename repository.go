@@ -46,4 +46,7 @@ func (r Repository) StartBuild() {
 		return
 	}
 
+	log.Println("Build successful, output")
+	log.Println(buildCmdOut.String())
+
 }
