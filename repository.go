@@ -6,14 +6,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/fsouza/go-dockerclient"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"os/user"
 	"path"
+	"path/filepath"
 	"strconv"
-	"time"
 )
 
 func NewClientFromEnv() (*docker.Client, error) {
@@ -82,22 +82,66 @@ func (r Repository) StartBuild() {
 
 	_ = targetDir + "/output"
 
-	t := time.Now()
-
 	inputBuf, outputBuf := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
 
-	dockerFile, err := ioutil.ReadFile(targetDir + "/Dockerfile")
+	dir, err := os.Open(targetDir)
+	defer dir.Close()
 
 	if err != nil {
-		log.Println("Unable to read dockerfile: " + err.Error())
+		log.Println("Unable to read dir: " + err.Error())
 		return
 	}
 
-	log.Println("Successfully read Dockerfile")
+	files, err := dir.Readdir(0)
+
+	if err != nil {
+		log.Println("Unable to read dir files: " + err.Error())
+		return
+	}
 
 	tr := tar.NewWriter(inputBuf)
-	tr.WriteHeader(&tar.Header{Name: "Dockerfile", Size: int64(len(dockerFile)), ModTime: t, AccessTime: t, ChangeTime: t})
-	tr.Write(dockerFile)
+
+	for _, fileInfo := range files {
+
+		if fileInfo.IsDir() {
+			continue
+		}
+
+		fullPath := dir.Name() + string(filepath.Separator) + fileInfo.Name()
+
+		log.Println("Packing: " + fullPath)
+
+		file, err := os.Open(fullPath)
+
+		if err != nil {
+			log.Println("Something went wrong reading file " + fileInfo.Name())
+			return
+		}
+
+		defer file.Close()
+
+		header := new(tar.Header)
+		header.Name = fileInfo.Name()
+		header.Size = fileInfo.Size()
+		header.Mode = int64(fileInfo.Mode())
+		header.ModTime = fileInfo.ModTime()
+
+		err = tr.WriteHeader(header)
+
+		if err != nil {
+			log.Println("Unable to write header " + err.Error())
+			return
+		}
+
+		_, err = io.Copy(tr, file)
+
+		if err != nil {
+			log.Println("Unable to copy file to tar archive " + err.Error())
+			return
+		}
+
+	}
+
 	tr.Close()
 
 	opts := docker.BuildImageOptions{
