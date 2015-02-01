@@ -3,7 +3,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os/exec"
 	"strconv"
@@ -19,15 +18,32 @@ func (r Repository) StartBuild() {
 
 	repoID := strconv.Itoa(r.ID)
 
-	cmd := exec.Command("git", "clone", r.CloneURL, "clones/"+repoID)
+	targetDir := "clones/" + repoID
+
+	cmd := exec.Command("git", "clone", r.CloneURL, targetDir)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 
 	if err != nil {
+		log.Println(err.Error())
 		log.Println(out.String())
-		log.Fatal(err)
+		return
 	}
-	fmt.Printf("Result: %s", out.String())
+
+	log.Println("Clone successful")
+
+	outputDir := targetDir + "/output"
+
+	buildCmd := exec.Command("docker", "build", targetDir, "-v", outputDir+":/output")
+	var buildCmdOut bytes.Buffer
+	cmd.Stdout = &buildCmdOut
+	err = buildCmd.Run()
+
+	if err != nil {
+		log.Println(err.Error())
+		log.Println(buildCmdOut.String())
+		return
+	}
 
 }
