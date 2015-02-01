@@ -4,27 +4,48 @@ package main
 import (
 	"archive/tar"
 	"bytes"
+	"fmt"
 	"github.com/fsouza/go-dockerclient"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
+	"path"
 	"strconv"
 	"time"
 )
 
-func getDockerClient() *docker.Client {
-
+func NewClientFromEnv() (*docker.Client, error) {
 	endpoint := os.Getenv("DOCKER_HOST")
-	log.Println("Trying to connect to: " + endpoint)
-
-	client, err := docker.NewClient(endpoint)
-
-	if err != nil {
-		log.Fatal("Unable to connect to docker: " + err.Error())
+	if endpoint == "" {
+		return nil, fmt.Errorf("Missing DOCKER_HOST")
 	}
 
-	return client
+	tlsVerify := os.Getenv("DOCKER_TLS_VERIFY") != ""
+	certPath := os.Getenv("DOCKER_CERT_PATH")
+
+	if tlsVerify || certPath != "" {
+		if certPath == "" {
+			user, err := user.Current()
+			if err != nil {
+				return nil, err
+			}
+
+			certPath = path.Join(user.HomeDir, ".docker")
+		}
+
+		cert := path.Join(certPath, "cert.pem")
+		key := path.Join(certPath, "key.pem")
+		ca := ""
+		if tlsVerify {
+			ca = path.Join(certPath, "ca.pem")
+		}
+
+		return docker.NewTLSClient(endpoint, cert, key, ca)
+	} else {
+		return docker.NewClient(endpoint)
+	}
 }
 
 type Repository struct {
@@ -35,7 +56,12 @@ type Repository struct {
 // StartBuild executes a build on the Commit Payload
 func (r Repository) StartBuild() {
 
-	client := getDockerClient()
+	client, err := NewClientFromEnv()
+
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
 
 	repoID := strconv.Itoa(r.ID)
 
@@ -44,7 +70,7 @@ func (r Repository) StartBuild() {
 	cmd := exec.Command("git", "clone", r.CloneURL, targetDir)
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		log.Println(err.Error())
