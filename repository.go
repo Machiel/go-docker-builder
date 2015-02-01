@@ -7,13 +7,17 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"strconv"
 	"time"
 )
 
 func getDockerClient() *docker.Client {
-	endpoint := "tcp://192.168.59.103:2376"
+
+	endpoint := os.Getenv("DOCKER_HOST")
+	log.Println("Trying to connect to: " + endpoint)
+
 	client, err := docker.NewClient(endpoint)
 
 	if err != nil {
