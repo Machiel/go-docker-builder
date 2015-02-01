@@ -67,6 +67,8 @@ func (r Repository) StartBuild() {
 		return
 	}
 
+	log.Println("Successfully read Dockerfile")
+
 	tr := tar.NewWriter(inputBuf)
 	tr.WriteHeader(&tar.Header{Name: "Dockerfile", Size: int64(len(dockerFile)), ModTime: t, AccessTime: t, ChangeTime: t})
 	tr.Write(dockerFile)
@@ -78,7 +80,11 @@ func (r Repository) StartBuild() {
 		OutputStream: outputBuf,
 	}
 
+	log.Println("Calling BuildImage")
+
 	err = client.BuildImage(opts)
+
+	log.Println("Finished calling BuildImage")
 
 	if err != nil {
 		log.Println("Unable to build: " + err.Error())
