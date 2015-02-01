@@ -37,10 +37,6 @@ func (r Repository) StartBuild() {
 
 	log.Println("Running: docker build " + targetDir)
 	buildCmd := exec.Command("docker", "build", targetDir)
-	var buildCmdOut bytes.Buffer
-	cmd.Stdout = &buildCmdOut
-	err = buildCmd.Run()
-
 	tpt, cerr := buildCmd.CombinedOutput()
 
 	if cerr != nil {
@@ -50,13 +46,6 @@ func (r Repository) StartBuild() {
 
 	log.Println(string(tpt))
 
-	if err != nil {
-		log.Println(err.Error())
-		log.Println(buildCmdOut.String())
-		return
-	}
-
 	log.Println("Build successful, output")
-	log.Println(buildCmdOut.String())
 
 }
