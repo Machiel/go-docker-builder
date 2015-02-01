@@ -2,7 +2,7 @@ FROM golang:latest
 
 VOLUME /output
 
-ADD /Users/Machiel/Documents/Projects/go/src/go-docker-builder /go/src/go-docker-builder
+ADD . /go/src/go-docker-builder
 
 WORKDIR /go/src/go-docker-builder
 
