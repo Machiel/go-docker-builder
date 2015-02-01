@@ -4,41 +4,30 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
 
-// CommitPayload contains the data received by BitBucket
 type CommitPayload struct {
-	CanonURL string `json:"canon_url"`
-	Commits  []struct {
-		Author string `json:"author"`
-		Branch string `json:"branch"`
-		Files  []struct {
-			File string `json:"file"`
-			Type string `json:"type"`
-		} `json:"files"`
-		Message      string      `json:"message"`
-		Node         string      `json:"node"`
-		Parents      []string    `json:"parents"`
-		RawAuthor    string      `json:"raw_author"`
-		RawNode      string      `json:"raw_node"`
-		Revision     interface{} `json:"revision"`
-		Size         float64     `json:"size"`
-		Timestamp    string      `json:"timestamp"`
-		Utctimestamp string      `json:"utctimestamp"`
-	} `json:"commits"`
 	Repository Repository `json:"repository"`
-	Truncated  bool       `json:"truncated"`
-	User       string     `json:"user"`
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
 
-	payload := r.PostForm.Get("payload")
+	if r.Method != "POST" {
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		log.Println("Unable to read body " + err.Error())
+		return
+	}
 
 	var commit CommitPayload
-	err := json.Unmarshal([]byte(payload), &commit)
+	err = json.Unmarshal(body, &commit)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -47,8 +36,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go commit.Repository.StartBuild()
-
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
 func main() {
