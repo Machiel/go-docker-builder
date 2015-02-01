@@ -35,6 +35,7 @@ func (r Repository) StartBuild() {
 
 	outputDir := targetDir + "/output"
 
+	log.Println("Running: docker build " + targetDir + " -v " + outputDir + ":/output")
 	buildCmd := exec.Command("docker", "build", targetDir, "-v", outputDir+":/output")
 	var buildCmdOut bytes.Buffer
 	cmd.Stdout = &buildCmdOut
