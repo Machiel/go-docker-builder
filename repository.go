@@ -33,10 +33,10 @@ func (r Repository) StartBuild() {
 
 	log.Println("Clone successful")
 
-	outputDir := targetDir + "/output"
+	_ = targetDir + "/output"
 
-	log.Println("Running: docker build " + targetDir + " -v " + outputDir + ":/output")
-	buildCmd := exec.Command("docker", "build", targetDir, "-v", outputDir+":/output")
+	log.Println("Running: docker build " + targetDir)
+	buildCmd := exec.Command("docker", "build", targetDir)
 	var buildCmdOut bytes.Buffer
 	cmd.Stdout = &buildCmdOut
 	err = buildCmd.Run()
