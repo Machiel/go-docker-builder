@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"strconv"
 )
 
 type Repository struct {
@@ -16,7 +17,9 @@ type Repository struct {
 // StartBuild executes a build on the Commit Payload
 func (r Repository) StartBuild() {
 
-	cmd := exec.Command("git", "clone", r.CloneURL, "clones/"+string(r.ID))
+	repoID := strconv.Itoa(r.ID)
+
+	cmd := exec.Command("git", "clone", r.CloneURL, "clones/"+repoID)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
